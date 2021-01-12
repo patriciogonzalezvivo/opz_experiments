@@ -2,39 +2,13 @@
 precision mediump float;
 #endif
 
-uniform float       u_kick;
-uniform float       u_snare;
-uniform float       u_perc;
-uniform float       u_sample;
-uniform float       u_bass;
-uniform float       u_lead;
-uniform float       u_arp;
-uniform float       u_chord;
-
 uniform sampler2D   u_buffer0;
 uniform sampler2D   u_buffer1;
 uniform vec2        u_resolution;
 uniform float       u_time;
 
-vec3 hsv2rgb(in vec3 hsb) {
-    vec3 rgb = clamp(abs(mod(hsb.x * 6. + vec3(0., 4., 2.), 
-                            6.) - 3.) - 1.,
-                    0., 1.);
-    return hsb.z * mix(vec3(1.), rgb, hsb.y);
-}
-
-float getChannel(float track) {
-    float tracks[8];
-    tracks[0] = u_kick;
-    tracks[1] = u_snare;
-    tracks[2] = u_perc;
-    tracks[3] = u_sample;
-    tracks[4] = u_bass;
-    tracks[5] = u_lead;
-    tracks[6] = u_arp;
-    tracks[7] = u_chord;
-    return tracks[int(track)];
-}
+#include "opz.glsl"
+#include "color/space/hsv2rgb.glsl"
 
 void main(void) {
     vec3 color = vec3(0.0);

@@ -64,20 +64,20 @@ vec3 backgroundContent(vec2 st) {
         vec2 ipos = floor(st);  // integer
         vec2 fpos = fract(st);  // fraction
 
-        vec2 vel = vec2(t*max(grid.x,grid.y)); // time
+        vec2 vel = vec2(t*max(grid.x,grid.y)+ u_chord * 0.1); // time
         vel *= vec2(-1.,0.0) * random(1.0+ipos.y); // direction
 
         // Assign a random value base on the integer coord
         vec2 offset = vec2(0.1,0.);
 
-        float pct = 1.5 - max(u_kick, max(u_lead, max(u_arp, u_chord)));
+        float pct = 0.2 + max( u_kick, u_lead);
         // color += pattern(st+offset,vel,pct);;
         color.r = pattern(st+offset,vel,0.5+pct);
         color.g = pattern(st,vel,0.5+pct);
         color.b = pattern(st-offset,vel,0.5+pct);
 
         // Margins
-        color *= step(0.2 + u_chord,fpos.y);
+        color *= step(0.2, fpos.y);
 
         if (u_background >= 2.0) {
             color *= smoothstep(0.408,0.816,1.-rInv);

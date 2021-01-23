@@ -1,6 +1,3 @@
-uniform sampler2D   u_scene;
-uniform sampler2D   u_sceneDepth;
-
 uniform float       u_postprocessing;
 
 #ifndef FNC_POSTPROCESSING

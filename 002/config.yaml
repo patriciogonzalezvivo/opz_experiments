@@ -1,0 +1,117 @@
+global:
+    epsilon: 0.5
+    
+    camera: 0
+    camera_speed: 1.0
+    camera_target: 0
+    
+    time: 0.0
+    time_status: false
+
+in:
+    OP-Z*:
+        -   key: 24-108
+            channel: 1
+            name: u_kick
+            type: number
+            map: [0.0, 1.0]
+
+        -   key: 24-108
+            channel: 2
+            name: u_snare
+            type: number
+            map: [0.0, 1.0]
+
+        -   key: 24-108
+            channel: 3
+            name: u_perc
+            type: number
+            map: [0.0, 1.0]
+
+        -   key: 24-108
+            channel: 4
+            name: u_sample
+            type: number
+            map: [0.0, 1.0]
+        
+        -   key: 24-108
+            channel: 5
+            name: u_bass
+            type: number
+            map: [0.0, 1.0]
+
+        -   key: 24-108
+            channel: 6
+            name: u_lead
+            type: number
+            map: [0.0, 1.0]
+            shape: |
+                function() {
+                    if (value == 0.0)
+                        return 0.0;
+                    low1 = 24.0;
+                    high1 = 108.0; 
+                    low2 = 0.0;
+                    high2 = 127.0;
+                    return (low2 + (high2 - low2) * (parseFloat(key) - low1) / (high1 - low1));
+                }
+
+        -   key: 24-108
+            channel: 7
+            name: u_arp
+            type: number
+            map: [0.0, 1.0]
+
+        -   key: 24-108
+            channel: 8
+            name: u_chord
+            type: number
+            map: [0.0, 1.0]
+
+        # -   key: 53-76
+        #     channel: 16
+        #     shape: |
+        #         function() {
+        #             if (value > 0)
+        #                 global.camera_target = ((parseFloat(key) - 53) / 23) * 127;
+        #             return false;
+        #         }
+
+        -   status: START_SONG
+            name: define
+            type: state
+            map: "OPZ_PLAYING"
+            shape: |
+                function() {
+                    global.time_status = true;
+                    global.time = 0.0;
+                    return true;
+                }
+
+        -   status: STOP_SONG
+            name: undefine
+            type: state
+            map: "OPZ_PLAYING"
+            shape: |
+                function() {
+                    global.time_status = false;
+                    return true;
+                }
+
+        -   status: TIMING_TICK
+            name: u_clock
+            shape: |
+                function() {
+                    if (global.time_status == true) {
+                        global.time = parseFloat(global.time) + 0.05;
+                        return parseFloat(global.time);
+                    }
+                    else {
+                        return false;
+                    }
+                }
+
+
+out:
+    -   csv
+    -   osc://localhost:8080

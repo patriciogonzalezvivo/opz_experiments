@@ -3,7 +3,6 @@ precision mediump float;
 #endif
 
 uniform sampler2D   u_buffer0;
-uniform sampler2D   u_buffer1;
 
 uniform sampler2D   u_tex0;
 uniform vec2        u_tex0Resolution;
@@ -11,75 +10,44 @@ uniform vec2        u_tex0Resolution;
 uniform vec2        u_resolution;
 uniform float       u_time;
 
-#include "opz.glsl"
-
 #include "glslLib/space/ratio.glsl"
 #include "glslLib/space/scale.glsl"
 
-#include "glslLib/color/palette/heatmap.glsl"
-#include "glslLib/color/palette/spectrum.glsl"
+#include "glslLib/color/space/all.glsl"
+#include "glslLib/color/levels/gamma.glsl"
 
-#include "glslLib/draw/fill.glsl"
-#include "glslLib/draw/stroke.glsl"
+#include "glslLib/fx/barrelDistortion.glsl"
+#define CHROMAAB_SAMPLER_FNC(POS_UV) barrelDistortion(tex, POS_UV, 0.015)
+#define CHROMAAB_PCT 1.5
+#include "glslLib/fx/chromaAB.glsl"
 
-#include "glslLib/draw/circleSDF.glsl"
-#include "glslLib/draw/rectSDF.glsl"
-
-
-#include "glslLib/math/const.glsl"
-
-#define NORMALMAP_Z 0.5
-#include "glslLib/operation/normalMap.glsl"
-
-#define NOISED_QUINTIC_INTERPOLATION
-#include "glslLib/generative/noised.glsl"
+#include "glslLib/generative/snoise.glsl"
 
 void main() {
     vec3 color = vec3(0.);
     vec2 st = gl_FragCoord.xy/u_resolution.xy;
+    vec2 uv = ratio(st, u_resolution);
     vec2 pixel = 1.0/u_resolution;
     float time = u_time * 1.;
 
-    vec2 uv = ratio(st, u_resolution);
-    float tF = fract(uv.x * 12.0);
-    float tI = float(uv.x * 12.0);
-    float perc = max(max(u_kick, u_snare), max(u_perc, u_sample));
-    float tone = max(max(u_bass, u_lead),  max(u_arp,  u_chord));
-
-    float mask = 0.0;
-    mask += stroke(tone, tI/12.0, 0.25);
-    mask += perc * stroke(uv.x, fract(u_time * 0.1), 0.1);
-
 #if defined(BUFFER_0)
+    vec2 tex0st = vec2(1.0-uv.x, uv.y);
+    tex0st = ratio(tex0st, u_tex0Resolution.yx);
+    tex0st = scale(tex0st, u_tex0Resolution.y/u_tex0Resolution.x);
 
-    vec4 noise = noised(vec3(st * 10., time));
+    vec2 uv_i = floor(uv * 20.0);
 
-    vec2 st2 = vec2(uv.x, 1.0 - uv.y);
-    st2 = ratio(st2, u_tex0Resolution.yx);
-    st2 = scale(st2, u_tex0Resolution.y/u_tex0Resolution.x);
-    vec3 normal = normalMap(u_tex0, st2, pixel);
-    vec3 stream = texture2D(u_tex0, st2).rgb;
-    vec2 displacement = vec2(0.0);
-    // Try commenting this lines
-    displacement += vec2(noise.x, 1.0);      // cascade 
-    // displacement += noise.yz;                // low freq dynamic drops 
-    // displacement += normal.xy;               // high freq static 
-    vec3 prev  = texture2D(u_buffer1, st + displacement * pixel).rgb;
-    
-    // vec3 hU = spectrum( hF * 0.65 + 0.15 );
-    // color += hU * texture2D(u_buffer1, st).rgb;
+    float n = snoise(vec3(uv_i * 0.025, u_time * 0.5 + uv_i.y ));
+    n = step(0.75, n);
 
-    
-    color = mix(prev, stream, mask);
-    // color = vec3(displacement, 0.);
-
-
-#elif defined(BUFFER_1)
-    color += texture2D(u_buffer0, st).rgb;
+    color = texture2D(u_tex0, tex0st + n * vec2(1., 3.) * pixel ).rgb;
+    color = mix(color, color * vec3(0.902, 1.0, 1.0), n);
+    color -= (sin(gl_FragCoord.y * 1.5) * 0.5 + 0.5) * 0.1;
 
 #else
-    color += texture2D(u_buffer1, st).rgb;
-    // color += fill(c, r*2.0);
+    st = scale(st, 0.95);
+    color = chromaAB(u_buffer0, st - pixel) * 1.25;
+    color = gamma2linear(color);
 
 #endif
 

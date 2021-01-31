@@ -38,7 +38,7 @@ void main() {
 
     vec2 uv = ratio(st, u_resolution);
 
-    vec2 st2 = vec2(uv.x, 1.0 - uv.y);
+    vec2 st2 = st;
     st2 = ratio(st2, u_tex0Resolution.yx);
     st2 = scale(st2, u_tex0Resolution.y/u_tex0Resolution.x);
 
